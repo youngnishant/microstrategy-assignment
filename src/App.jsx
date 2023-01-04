@@ -1,9 +1,43 @@
-import { useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import '../mstr-web-sdk';
 
 import './styles/App.css';
 
 const App = () => {
-  const [count, setCount] = useState(0);
+  const mstrContainer = useRef(null);
+  const initiateMSTR = () => {
+    let url =
+      'https://demo.microstrategy.com/MicroStrategyLibrary/app/B7CA92F04B9FAE8D941C3E9B7E0CD754/58FD451E1541F23210E9698F84A71985/K149--K142'; // https://{env-url}/{libraryName}/app/{projectId}/{dossierId}
+
+    const config = {
+      url: url,
+      placeholder: mstrContainer.current,
+      navigationBar: {
+        enabled: true,
+        gotoLibrary: true,
+        title: true,
+        toc: true,
+        reset: true,
+        reprompt: true,
+        share: false,
+        comment: true,
+        notification: true,
+        filter: false,
+        options: true,
+        search: true,
+        bookmark: true
+      },
+      enableResponsive: true
+    };
+
+    microstrategy.dossier.create(config);
+  };
+
+  useEffect(() => {
+    if (mstrContainer) {
+      initiateMSTR();
+    }
+  }, [mstrContainer]);
 
   return (
     <>
@@ -94,7 +128,7 @@ const App = () => {
           </div>
         </div>
       </div>
-      <div id="embedding-dossier-container" />
+      <div ref={mstrContainer} id="embedding-dossier-container" />
     </>
   );
 };
