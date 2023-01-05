@@ -1,46 +1,46 @@
-import { useEffect, useState, useRef } from 'react';
-import '../mstr-web-sdk';
+import { useEffect, useRef, useState } from 'react';
+import { isEmpty } from 'lodash';
+
+import { initiateMSTR } from './utils/mstr.utils';
 
 import './styles/App.css';
 
 const App = () => {
+  const [filterOptions, setFilterOptions] = useState([]);
+  const [nestedFilterOptions, setNestedFilterOptions] = useState({});
+  const [loading, setLoading] = useState(false);
+
   const mstrContainer = useRef(null);
-  const initiateMSTR = () => {
-    let url =
-      'https://demo.microstrategy.com/MicroStrategyLibrary/app/B7CA92F04B9FAE8D941C3E9B7E0CD754/58FD451E1541F23210E9698F84A71985/K149--K142'; // https://{env-url}/{libraryName}/app/{projectId}/{dossierId}
 
-    const config = {
-      url: url,
-      placeholder: mstrContainer.current,
-      navigationBar: {
-        enabled: true,
-        gotoLibrary: true,
-        title: true,
-        toc: true,
-        reset: true,
-        reprompt: true,
-        share: false,
-        comment: true,
-        notification: true,
-        filter: false,
-        options: true,
-        search: true,
-        bookmark: true
-      },
-      enableResponsive: true
-    };
+  const handleInitiateMstrDossier = async () => {
+    setLoading(true);
+    if (mstrContainer) {
+      const mstrDossier = await initiateMSTR(mstrContainer);
+      if (mstrDossier) {
+        const dossierFilters = await mstrDossier.getFilterList();
+        const defaultNestedFilters = dossierFilters.find((i) => i.filterName === 'Year');
 
-    microstrategy.dossier.create(config);
+        setFilterOptions(dossierFilters);
+        setNestedFilterOptions(defaultNestedFilters.filterDetail);
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleOnFilterChange = (value) => {
+    if (value) {
+      const filter = filterOptions.find((i) => i.filterName === value);
+      setNestedFilterOptions(filter.filterDetail);
+    }
   };
 
   useEffect(() => {
-    if (mstrContainer) {
-      initiateMSTR();
-    }
+    handleInitiateMstrDossier();
   }, [mstrContainer]);
 
   return (
     <>
+      {loading && <p className="loader">Loading...</p>}
       <div className="basic-container">
         <div className="instructions-container">
           <span className="instructions-title">Instructions</span>
@@ -70,10 +70,12 @@ const App = () => {
             value="Update Filters"
           />
           <label htmlFor="filterList">Current List of "attributeSelector" Filters:</label>
-          <select
-            id="filterList"
-            //  onChange="showFilter(this)"
-          ></select>
+          <select id="filterList" onChange={(e) => handleOnFilterChange(e.target.value)}>
+            {filterOptions.length !== 0 &&
+              filterOptions.map((option) => (
+                <option key={option.filterKey}>{option.filterName}</option>
+              ))}
+          </select>
           <div id="currentFilterObject">
             <label htmlFor="currentFilterObjectContent">Current Filter Object:</label>
             <span id="currentFilterObjectContent">Check console for current filter object</span>
@@ -82,7 +84,7 @@ const App = () => {
             <label htmlFor="attributeSelectorValuesContainer">
               Select the values to filter on: <br />
             </label>
-            <div>
+            <div className="flex-col-gap-5">
               <input
                 type="button"
                 className="basic-button"
@@ -101,9 +103,24 @@ const App = () => {
             <div
               id="attributeSelectorValuesContainer"
               className="basic-checkbox basic-checkbox__item-list">
-              <span>No values found</span>
+              {isEmpty(nestedFilterOptions) && isEmpty(nestedFilterOptions.items) ? (
+                <span>No values found</span>
+              ) : (
+                nestedFilterOptions.items.map((item) => (
+                  <label>
+                    <input
+                      type={nestedFilterOptions.supportMultiple ? 'checkbox' : 'radio'}
+                      className="attributeSelectorValues"
+                      name="attributeSelectorValues"
+                      value={item.value}
+                      defaultChecked={item.selected}
+                    />
+                    {item.name}
+                  </label>
+                ))
+              )}
             </div>
-            <div>
+            <div className="flex-col-gap-5">
               <input
                 type="button"
                 value="Submit"

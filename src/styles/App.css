@@ -59,3 +59,24 @@
   align-items: baseline;
   margin: 0.5em 0;
 }
+
+.loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  margin:0;
+  padding: 0;
+  inset: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: rgba(255, 255, 255, 0.707);
+  font-size: 30px;
+  font-family: monospace;
+  z-index: 9999;
+}
+
+.flex-col-gap-5 {
+  display: flex;
+  column-gap: 5px;
+}
