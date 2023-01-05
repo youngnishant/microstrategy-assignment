@@ -6,37 +6,95 @@ import { initiateMSTR } from './utils/mstr.utils';
 import './styles/App.css';
 
 const App = () => {
+  const [dossier, setDossier] = useState(null);
+  const [selectedFilterCategory, setSelectedFilterCategory] = useState('');
   const [filterOptions, setFilterOptions] = useState([]);
   const [nestedFilterOptions, setNestedFilterOptions] = useState({});
   const [loading, setLoading] = useState(false);
 
   const mstrContainer = useRef(null);
 
-  const handleInitiateMstrDossier = async () => {
+  const defaultSelectedFilterCategory = 'Year';
+
+  const updateFilters = async () => {
     setLoading(true);
+    if (dossier) {
+      const dossierFilters = await dossier.getFilterList();
+      const defaultNestedFilters = dossierFilters.find(
+        (i) => i.filterName === defaultSelectedFilterCategory
+      );
+
+      setSelectedFilterCategory(defaultSelectedFilterCategory);
+      setFilterOptions(dossierFilters);
+      setNestedFilterOptions(defaultNestedFilters.filterDetail);
+      setLoading(false);
+    }
+  };
+
+  const handleInitiateMstrDossier = async () => {
     if (mstrContainer) {
       const mstrDossier = await initiateMSTR(mstrContainer);
-      if (mstrDossier) {
-        const dossierFilters = await mstrDossier.getFilterList();
-        const defaultNestedFilters = dossierFilters.find((i) => i.filterName === 'Year');
-
-        setFilterOptions(dossierFilters);
-        setNestedFilterOptions(defaultNestedFilters.filterDetail);
-        setLoading(false);
-      }
+      setDossier(mstrDossier);
     }
   };
 
   const handleOnFilterChange = (value) => {
     if (value) {
       const filter = filterOptions.find((i) => i.filterName === value);
+      setSelectedFilterCategory(value);
       setNestedFilterOptions(filter.filterDetail);
     }
+  };
+
+  const handleNestedOptionClick = (e) => {
+    let allNestedOptions;
+
+    if (nestedFilterOptions.supportMultiple) {
+      allNestedOptions = nestedFilterOptions.items.map((option) => {
+        if (option.value === e.target.value) {
+          return { ...option, selected: !option.selected };
+        }
+        return option;
+      });
+    } else {
+      allNestedOptions = nestedFilterOptions.items.map((option) => {
+        if (option.value === e.target.value) {
+          return { ...option, selected: true };
+        }
+        return { ...option, selected: false };
+      });
+    }
+    if (allNestedOptions) {
+      setNestedFilterOptions({
+        supportMultiple: nestedFilterOptions.supportMultiple,
+        items: allNestedOptions
+      });
+    }
+  };
+
+  const handleAllSelections = (selected, submit = false) => {
+    const nestedOptions = nestedFilterOptions.items.map((item) => ({ ...item, selected }));
+    setNestedFilterOptions({
+      supportMultiple: nestedFilterOptions.supportMultiple,
+      items: nestedOptions
+    });
+
+    if (submit) {
+      console.log('submitting');
+    }
+  };
+
+  const applyFilter = () => {
+    console.log('applying filters');
   };
 
   useEffect(() => {
     handleInitiateMstrDossier();
   }, [mstrContainer]);
+
+  useEffect(() => {
+    updateFilters();
+  }, [dossier]);
 
   return (
     <>
@@ -66,14 +124,18 @@ const App = () => {
           <input
             type="button"
             className="basic-button update-button"
-            // onClick="updateFilters()"
+            onClick={updateFilters}
             value="Update Filters"
           />
           <label htmlFor="filterList">Current List of "attributeSelector" Filters:</label>
           <select id="filterList" onChange={(e) => handleOnFilterChange(e.target.value)}>
             {filterOptions.length !== 0 &&
               filterOptions.map((option) => (
-                <option key={option.filterKey}>{option.filterName}</option>
+                <option
+                  key={option.filterKey}
+                  selected={option.filterName === selectedFilterCategory}>
+                  {option.filterName}
+                </option>
               ))}
           </select>
           <div id="currentFilterObject">
@@ -90,14 +152,15 @@ const App = () => {
                 className="basic-button"
                 id="attributeSelectorValuesSelectAll"
                 value="Select All"
-                // onClick="selectAllAttributeValues(attributeSelector,true)"
+                onClick={() => handleAllSelections(true)}
+                disabled={!nestedFilterOptions.supportMultiple}
               />
               <input
                 type="button"
                 className="basic-button"
                 id="attributeSelectorValuesClearAll"
                 value="Clear All"
-                // onClick="selectAllAttributeValues(attributeSelector, false)"
+                onClick={() => handleAllSelections(false)}
               />
             </div>
             <div
@@ -113,7 +176,8 @@ const App = () => {
                       className="attributeSelectorValues"
                       name="attributeSelectorValues"
                       value={item.value}
-                      defaultChecked={item.selected}
+                      checked={item.selected}
+                      onClick={handleNestedOptionClick}
                     />
                     {item.name}
                   </label>
@@ -121,25 +185,21 @@ const App = () => {
               )}
             </div>
             <div className="flex-col-gap-5">
-              <input
-                type="button"
-                value="Submit"
-                className="basic-button"
-                // onClick="applyFilter(attributeSelector)"
-              />
+              <input type="button" value="Submit" className="basic-button" onClick={applyFilter} />
               <input
                 type="button"
                 className="basic-button"
                 id="attributeSelectorValuesSelectAllAndSubmit"
                 value="Select All and Submit"
-                // onClick="selectAllAndSubmit()"
+                disabled={!nestedFilterOptions.supportMultiple}
+                onClick={() => handleAllSelections(true, true)}
               />
               <input
                 type="button"
                 className="basic-button"
                 id="attributeSelectorValuesDeselectAllAndSubmit"
                 value="Deselect All and Submit"
-                // onClick="deselectAllAndSubmit()"
+                onClick={() => handleAllSelections(false, true)}
               />
             </div>
           </div>
