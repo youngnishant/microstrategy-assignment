@@ -7,6 +7,7 @@ const initiateMSTR = async (ref) => {
   const config = {
     url: url,
     placeholder: ref.current,
+    enableResponsive: true,
     navigationBar: {
       enabled: true,
       gotoLibrary: true,
@@ -22,7 +23,27 @@ const initiateMSTR = async (ref) => {
       search: true,
       bookmark: true
     },
-    enableResponsive: true
+    filters: [
+      {
+        key: 'W132',
+        selections: [
+          {
+            id: 'h2014;8D679D5111D3E4981000E787EC6DE8A4'
+          }
+        ]
+      },
+      {
+        key: 'W134',
+        selections: [
+          {
+            id: 'h201401;8D679D4411D3E4981000E787EC6DE8A4'
+          },
+          {
+            id: 'h201402;8D679D4411D3E4981000E787EC6DE8A4'
+          }
+        ]
+      }
+    ]
   };
 
   return await microstrategy.dossier.create(config);
