@@ -99,14 +99,15 @@ const App = () => {
   return (
     <>
       {loading && <p className="loader">Loading...</p>}
-      <div className="basic-container">
+      <form className="basic-container">
         <div className="instructions-container">
           <span className="instructions-title">Instructions</span>
           <span className="instruction">
-            This code sample covers how to retrieve and apply the "attributeSelector" filter
+            This code sample covers how to retrieve and apply the &quot;attributeSelector&quot;
+            filter
           </span>
           <span className="instruction">
-            1) Select the "attributeSelector" filter you want to modify
+            1) Select the &quot;attributeSelector&quot; filter you want to modify
           </span>
           <span className="instruction">
             2) Change the values you want to modify in each filter
@@ -115,7 +116,8 @@ const App = () => {
             For more information on using filters, visit &nbsp;
             <a
               href="https://microstrategy.github.io/embedding-sdk-docs/add-functionality/filters"
-              target="_blank">
+              target="_blank"
+              rel="noreferrer">
               documentation.
             </a>
           </span>
@@ -127,7 +129,7 @@ const App = () => {
             onClick={updateFilters}
             value="Update Filters"
           />
-          <label htmlFor="filterList">Current List of "attributeSelector" Filters:</label>
+          <label htmlFor="filterList">Current List of &quot;attributeSelector&quot; Filters:</label>
           <select id="filterList" onChange={(e) => handleOnFilterChange(e.target.value)}>
             {filterOptions.length !== 0 &&
               filterOptions.map((option) => (
@@ -170,7 +172,7 @@ const App = () => {
                 <span>No values found</span>
               ) : (
                 nestedFilterOptions.items.map((item) => (
-                  <label>
+                  <label key={item.value}>
                     <input
                       type={nestedFilterOptions.supportMultiple ? 'checkbox' : 'radio'}
                       className="attributeSelectorValues"
@@ -204,7 +206,7 @@ const App = () => {
             </div>
           </div>
         </div>
-      </div>
+      </form>
       <div ref={mstrContainer} id="embedding-dossier-container" />
     </>
   );

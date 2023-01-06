@@ -1,11 +1,11 @@
 import '../vendor-scripts/mstr-web-sdk';
 
 const initiateMSTR = async (ref) => {
-  let url =
+  const url =
     'https://demo.microstrategy.com/MicroStrategyLibrary/app/B7CA92F04B9FAE8D941C3E9B7E0CD754/58FD451E1541F23210E9698F84A71985/K149--K142'; // https://{env-url}/{libraryName}/app/{projectId}/{dossierId}
 
   const config = {
-    url: url,
+    url,
     placeholder: ref.current,
     enableResponsive: true,
     navigationBar: {
@@ -46,7 +46,8 @@ const initiateMSTR = async (ref) => {
     ]
   };
 
-  return await microstrategy.dossier.create(config);
+  // eslint-disable-next-line no-undef
+  return microstrategy.dossier.create(config);
 };
 
 export { initiateMSTR };
