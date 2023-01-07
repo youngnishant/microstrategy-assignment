@@ -46,8 +46,7 @@ const initiateMSTR = async (ref) => {
     ]
   };
 
-  // eslint-disable-next-line no-undef
-  return microstrategy.dossier.create(config);
+  return window.microstrategy.dossier.create(config);
 };
 
 export { initiateMSTR };

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 
 import { initiateMSTR } from './utils/mstr.utils';
 
@@ -7,9 +7,8 @@ import './styles/App.css';
 
 const App = () => {
   const [dossier, setDossier] = useState(null);
-  const [selectedFilterCategory, setSelectedFilterCategory] = useState('');
   const [filterOptions, setFilterOptions] = useState([]);
-  const [nestedFilterOptions, setNestedFilterOptions] = useState({});
+  const [selectedFilterCategory, setSelectedFilterCategory] = useState({});
   const [loading, setLoading] = useState(false);
 
   const mstrContainer = useRef(null);
@@ -24,66 +23,115 @@ const App = () => {
         (i) => i.filterName === defaultSelectedFilterCategory
       );
 
-      setSelectedFilterCategory(defaultSelectedFilterCategory);
+      setSelectedFilterCategory(defaultNestedFilters);
       setFilterOptions(dossierFilters);
-      setNestedFilterOptions(defaultNestedFilters.filterDetail);
       setLoading(false);
     }
+  };
+
+  const handleOnFilterUpdateEvent = (e) => {
+    setFilterOptions(e.filterInfo);
   };
 
   const handleInitiateMstrDossier = async () => {
     if (mstrContainer) {
       const mstrDossier = await initiateMSTR(mstrContainer);
       setDossier(mstrDossier);
+
+      // Update filters when page switches
+      mstrDossier.registerEventHandler(
+        window.microstrategy.dossier.EventType.ON_PAGE_SWITCHED,
+        updateFilters
+      );
+
+      // Update filters when page finishes loading
+      mstrDossier.registerEventHandler(
+        window.microstrategy.dossier.EventType.ON_PAGE_LOADED,
+        updateFilters
+      );
+
+      mstrDossier.registerEventHandler(
+        window.microstrategy.dossier.EventType.ON_FILTER_UPDATED,
+        handleOnFilterUpdateEvent
+      );
     }
   };
 
   const handleOnFilterChange = (value) => {
     if (value) {
       const filter = filterOptions.find((i) => i.filterName === value);
-      setSelectedFilterCategory(value);
-      setNestedFilterOptions(filter.filterDetail);
+      setSelectedFilterCategory(filter);
     }
   };
 
   const handleNestedOptionClick = (e) => {
-    let allNestedOptions;
+    let nestedOptions;
 
-    if (nestedFilterOptions.supportMultiple) {
-      allNestedOptions = nestedFilterOptions.items.map((option) => {
+    if (selectedFilterCategory.filterDetail.supportMultiple) {
+      nestedOptions = selectedFilterCategory.filterDetail.items.map((option) => {
         if (option.value === e.target.value) {
           return { ...option, selected: !option.selected };
         }
         return option;
       });
     } else {
-      allNestedOptions = nestedFilterOptions.items.map((option) => {
+      nestedOptions = selectedFilterCategory.filterDetail.items.map((option) => {
         if (option.value === e.target.value) {
           return { ...option, selected: true };
         }
         return { ...option, selected: false };
       });
     }
-    if (allNestedOptions) {
-      setNestedFilterOptions({
-        supportMultiple: nestedFilterOptions.supportMultiple,
-        items: allNestedOptions
+    if (nestedOptions) {
+      const tempSelectedFilter = cloneDeep(selectedFilterCategory);
+
+      Object.assign(tempSelectedFilter, {
+        filterDetail: {
+          supportMultiple: selectedFilterCategory.filterDetail.supportMultiple,
+          items: nestedOptions
+        }
+      });
+
+      setSelectedFilterCategory(tempSelectedFilter);
+    }
+  };
+
+  const handleAllSelections = (selected) => {
+    const nestedOptions = selectedFilterCategory.filterDetail.items.map((item) => ({
+      ...item,
+      selected
+    }));
+
+    const tempSelectedFilter = cloneDeep(selectedFilterCategory);
+
+    Object.assign(tempSelectedFilter, {
+      filterDetail: {
+        supportMultiple: selectedFilterCategory.filterDetail.supportMultiple,
+        items: nestedOptions
+      }
+    });
+
+    setSelectedFilterCategory(tempSelectedFilter);
+  };
+
+  const handleAllSelectionsAndSubmit = (selected) => {
+    handleAllSelections(selected);
+    if (selected) {
+      dossier.filterSelectAllAttributes({
+        filterInfo: {
+          key: selectedFilterCategory.filterKey
+        },
+        holdSubmit: false
+      });
+    } else {
+      dossier.filterDeselectAllAttributes({
+        filterInfo: {
+          key: selectedFilterCategory.filterKey
+        },
+        holdSubmit: false
       });
     }
   };
-
-  const handleAllSelections = (selected, submit = false) => {
-    const nestedOptions = nestedFilterOptions.items.map((item) => ({ ...item, selected }));
-    setNestedFilterOptions({
-      supportMultiple: nestedFilterOptions.supportMultiple,
-      items: nestedOptions
-    });
-
-    if (submit) {
-      console.log('submitting');
-    }
-  };
-
   const applyFilter = () => {
     console.log('applying filters');
   };
@@ -99,7 +147,7 @@ const App = () => {
   return (
     <>
       {loading && <p className="loader">Loading...</p>}
-      <form className="basic-container">
+      <div className="basic-container">
         <div className="instructions-container">
           <span className="instructions-title">Instructions</span>
           <span className="instruction">
@@ -130,12 +178,13 @@ const App = () => {
             value="Update Filters"
           />
           <label htmlFor="filterList">Current List of &quot;attributeSelector&quot; Filters:</label>
-          <select id="filterList" onChange={(e) => handleOnFilterChange(e.target.value)}>
-            {filterOptions.length !== 0 &&
-              filterOptions.map((option) => (
-                <option
-                  key={option.filterKey}
-                  selected={option.filterName === selectedFilterCategory}>
+          <select
+            id="filterList"
+            value={selectedFilterCategory.filterName}
+            onChange={(e) => handleOnFilterChange(e.target.value)}>
+            {filterOptions?.length !== 0 &&
+              filterOptions?.map((option) => (
+                <option key={option.filterKey} value={option.filterName}>
                   {option.filterName}
                 </option>
               ))}
@@ -155,7 +204,7 @@ const App = () => {
                 id="attributeSelectorValuesSelectAll"
                 value="Select All"
                 onClick={() => handleAllSelections(true)}
-                disabled={!nestedFilterOptions.supportMultiple}
+                disabled={!selectedFilterCategory?.filterDetail?.supportMultiple}
               />
               <input
                 type="button"
@@ -168,18 +217,21 @@ const App = () => {
             <div
               id="attributeSelectorValuesContainer"
               className="basic-checkbox basic-checkbox__item-list">
-              {isEmpty(nestedFilterOptions) && isEmpty(nestedFilterOptions.items) ? (
+              {isEmpty(selectedFilterCategory) &&
+              isEmpty(selectedFilterCategory?.filterDetail?.items) ? (
                 <span>No values found</span>
               ) : (
-                nestedFilterOptions.items.map((item) => (
+                selectedFilterCategory?.filterDetail?.items?.map((item) => (
                   <label key={item.value}>
                     <input
-                      type={nestedFilterOptions.supportMultiple ? 'checkbox' : 'radio'}
+                      type={
+                        selectedFilterCategory?.filterDetail?.supportMultiple ? 'checkbox' : 'radio'
+                      }
                       className="attributeSelectorValues"
                       name="attributeSelectorValues"
                       value={item.value}
                       checked={item.selected}
-                      onClick={handleNestedOptionClick}
+                      onChange={handleNestedOptionClick}
                     />
                     {item.name}
                   </label>
@@ -193,20 +245,20 @@ const App = () => {
                 className="basic-button"
                 id="attributeSelectorValuesSelectAllAndSubmit"
                 value="Select All and Submit"
-                disabled={!nestedFilterOptions.supportMultiple}
-                onClick={() => handleAllSelections(true, true)}
+                disabled={!selectedFilterCategory?.filterDetail?.supportMultiple}
+                onClick={() => handleAllSelectionsAndSubmit(true)}
               />
               <input
                 type="button"
                 className="basic-button"
                 id="attributeSelectorValuesDeselectAllAndSubmit"
                 value="Deselect All and Submit"
-                onClick={() => handleAllSelections(false, true)}
+                onClick={() => handleAllSelectionsAndSubmit(false)}
               />
             </div>
           </div>
         </div>
-      </form>
+      </div>
       <div ref={mstrContainer} id="embedding-dossier-container" />
     </>
   );
