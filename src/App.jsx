@@ -133,7 +133,50 @@ const App = () => {
     }
   };
   const applyFilter = () => {
-    console.log('applying filters');
+    const filterInfo = {
+      key: selectedFilterCategory.filterKey
+    };
+
+    if (selectedFilterCategory.filterDetail.supportMultiple) {
+      const selections = [];
+
+      // For each selected value add it to the array
+      selectedFilterCategory.filterDetail.items.forEach((item) => {
+        if (item.selected) {
+          selections.push({ value: item.value });
+        }
+      });
+
+      const filterJson = {
+        filterInfo,
+        selections
+      };
+      dossier.filterSelectMultiAttributes(filterJson);
+    } else {
+      let selection = null;
+
+      selectedFilterCategory.filterDetail.items.forEach((item) => {
+        if (item.selected) {
+          selection = { value: item.value };
+        }
+      });
+
+      // Check if there was a selection made, apply it if there is. Clear the filter otherwise.
+      if (selection) {
+        const filterJson = {
+          filterInfo,
+          selection
+        };
+
+        dossier.filterSelectSingleAttribute(filterJson);
+      } else {
+        const filterJson = {
+          filterInfo
+        };
+
+        dossier.filterClear(filterJson);
+      }
+    }
   };
 
   useEffect(() => {
