@@ -6,16 +6,16 @@ import { initiateMSTR } from '../../utils/mstr.utils';
 const DossierContainer = ({ setDossier }) => {
   const mstrContainer = useRef(null);
 
+  // Function to intiate MSTR Dossier
   const handleInitiateMstrDossier = async () => {
-    if (mstrContainer) {
-      const mstrDossier = await initiateMSTR(mstrContainer);
-      setDossier(mstrDossier);
-    }
+    const mstrDossier = await initiateMSTR(mstrContainer);
+    setDossier(mstrDossier);
   };
 
+  // Triggered MSTR Intialisation function on mounting of this container
   useEffect(() => {
     handleInitiateMstrDossier();
-  }, [mstrContainer]);
+  }, []);
 
   return <div ref={mstrContainer} id="embedding-dossier-container" />;
 };

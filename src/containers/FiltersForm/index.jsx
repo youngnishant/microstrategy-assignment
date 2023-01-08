@@ -1,9 +1,9 @@
-/* eslint-disable react/forbid-prop-types */
 import { useState, useEffect } from 'react';
 import { isEmpty, cloneDeep } from 'lodash';
 import PropTypes from 'prop-types';
 
 import Button from '../../components/Button';
+import OptionButton from '../../components/OptionButtons';
 
 import './styles.css';
 
@@ -13,6 +13,7 @@ const FiltersForm = ({ dossier, setLoading }) => {
 
   const defaultSelectedFilterCategory = 'Year';
 
+  // Function to update filters and reset at default
   const updateFilters = async () => {
     setLoading(true);
     const dossierFilters = await dossier.getFilterList();
@@ -25,10 +26,12 @@ const FiltersForm = ({ dossier, setLoading }) => {
     setLoading(false);
   };
 
+  // Function used to update filter state on filter update event
   const handleOnFilterUpdateEvent = (e) => {
     setFilterOptions(e.filterInfo);
   };
 
+  // Function to handle first filter value change, eg: year or month
   const handleOnFilterChange = (value) => {
     if (value) {
       const filter = filterOptions.find((i) => i.filterName === value);
@@ -36,6 +39,7 @@ const FiltersForm = ({ dossier, setLoading }) => {
     }
   };
 
+  // Function to handle On change of second filter value eg: 2014 or July 2014
   const handleNestedOptionClick = (e) => {
     let nestedOptions;
 
@@ -68,6 +72,7 @@ const FiltersForm = ({ dossier, setLoading }) => {
     }
   };
 
+  // Function to handle Select or deselect all filter option button, eg select if selected=true
   const handleAllSelections = (selected) => {
     const nestedOptions = selectedFilterCategory.filterDetail.items.map((item) => ({
       ...item,
@@ -86,6 +91,7 @@ const FiltersForm = ({ dossier, setLoading }) => {
     setSelectedFilterCategory(tempSelectedFilter);
   };
 
+  // Function to handle Select or deselect all filter option and submit it
   const handleAllSelectionsAndSubmit = (selected) => {
     handleAllSelections(selected);
     if (selected) {
@@ -105,6 +111,7 @@ const FiltersForm = ({ dossier, setLoading }) => {
     }
   };
 
+  // Function to apply selected filters
   const applyFilter = () => {
     const filterInfo = {
       key: selectedFilterCategory.filterKey
@@ -152,6 +159,7 @@ const FiltersForm = ({ dossier, setLoading }) => {
     }
   };
 
+  // Function to Add MSTR Dossier Event listeners
   const addDossierEventListeners = () => {
     // Update filters when page switches
     dossier.registerEventHandler(
@@ -172,6 +180,7 @@ const FiltersForm = ({ dossier, setLoading }) => {
     );
   };
 
+  // Triggered when Dossier value is changed and on mounting of this container
   useEffect(() => {
     if (dossier) {
       addDossierEventListeners();
@@ -218,19 +227,14 @@ const FiltersForm = ({ dossier, setLoading }) => {
             <span>No values found</span>
           ) : (
             selectedFilterCategory?.filterDetail?.items?.map((item) => (
-              <label key={item.value}>
-                <input
-                  type={
-                    selectedFilterCategory?.filterDetail?.supportMultiple ? 'checkbox' : 'radio'
-                  }
-                  className="attributeSelectorValues"
-                  name="attributeSelectorValues"
-                  value={item.value}
-                  checked={item.selected}
-                  onChange={handleNestedOptionClick}
-                />
-                {item.name}
-              </label>
+              <OptionButton
+                key={item.value}
+                name={item.name}
+                value={item.value}
+                checked={item.selected}
+                type={selectedFilterCategory?.filterDetail?.supportMultiple ? 'checkbox' : 'radio'}
+                onChange={handleNestedOptionClick}
+              />
             ))
           )}
         </div>
