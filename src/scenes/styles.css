@@ -1,0 +1,8 @@
+.basic-container {
+  display: flex;
+  position: relative;
+  font: 14px;
+  background-color: var(--BACKGROUND);
+  padding: 7px;
+  flex-direction: row;
+}

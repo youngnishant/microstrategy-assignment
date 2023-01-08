@@ -1,0 +1,27 @@
+.basic-button {
+  width: 200x;
+  padding: 5px;
+  border: none;
+  border-radius: 3px;
+  background-color: var(--BUTTON-PRIMARY);
+  color: var(--color-white);
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.basic-button:disabled {
+  background-color: var(--BUTTON-PRIMARY-INACTIVE);
+  cursor: default;
+}
+
+.update-button {
+  max-width: 200px;
+  flex-grow: 0;
+}
+[disabled] {
+  cursor: default;
+  pointer-events: none;
+  background-color: var(--BUTTON-PRIMARY-INACTIVE);
+}

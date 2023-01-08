@@ -1,0 +1,40 @@
+.example-container {
+  display: flex;
+  background-color: var(--color-white);
+  padding: 7px;
+  margin: 7px;
+  box-sizing: border-box;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 20%);
+  border: 1px solid var(--BACKGROUND);
+  flex-direction: column;
+  flex: 1 1 60vw;
+}
+
+.basic-checkbox {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--BUTTON-PRIMARY);
+  padding-left: 5px;
+}
+
+.basic-checkbox__item-list {
+  font-size: 14px;
+  font-weight: 400;
+  overflow: auto;
+  width: 280px;
+  flex: 1 1 auto;
+  max-height: 100px;
+}
+
+.basic-form-layout {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  flex-direction: column;
+  row-gap: 5px;
+}
+
+.flex-col-gap-5 {
+  display: flex;
+  column-gap: 5px;
+}
